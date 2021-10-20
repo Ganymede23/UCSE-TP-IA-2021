@@ -38,21 +38,24 @@ constraints = []
 
 def robot_range(variables, values):
     total_cost_per_movement = sum(upgrade[1] for upgrade in values)
-    has_small_batteries = "baterias_chicas" in [upgrade[0] for upgrades in values]
-    has_medium_batteries = "baterias_medianas" in [upgrade[0] for upgrades in values]
-    has_big_batteries = "baterias_grandes" in [upgrade[0] for upgrades in values]
+    has_small_batteries = "baterias_chicas" in [upgrade[0] for upgrade in values]
+    has_medium_batteries = "baterias_medianas" in [upgrade[0] for upgrade in values]
+    has_big_batteries = "baterias_grandes" in [upgrade[0] for upgrade in values]
 
     # Hay formas mucho mejores de resolver esto. 
     # Una alternativa es agregar los mAh finales que deja la batería al diccionario y consultar ahí.
     # Esto así es bastante fulero, pero funciona(ría)
     
     if has_small_batteries:
-        return 5000 / total_cost_per_movement >= 50
+        #print("small:", (5000 / (100+total_cost_per_movement)))
+        return 5000 / (100+total_cost_per_movement) >= 50        
     elif has_medium_batteries:
-        return 7500 / total_cost_per_movement >= 50
+        #print("medium:", (7500 / (100+total_cost_per_movement)))
+        return 7500 / (100+total_cost_per_movement) >= 50
     elif has_big_batteries:
-        return 10000 / total_cost_per_movement >= 50
-    else
+        #print("big:", (10000 / (100+total_cost_per_movement)))
+        return 10000 / (100+total_cost_per_movement) >= 50
+    else:
         return False
 
 constraints.append((problem_variables, robot_range))
@@ -60,8 +63,8 @@ constraints.append((problem_variables, robot_range))
 # Restricción: si usa baterías grandes necesita usar las orugas
 
 def big_batteries_require_tracks(variables, values):
-    has_tracks = "orugas" in [upgrade[0] for upgrades in values]
-    has_big_batteries = "baterias_grandes" in [upgrade[0] for upgrades in values]
+    has_tracks = "orugas" in [upgrade[0] for upgrade in values]
+    has_big_batteries = "baterias_grandes" in [upgrade[0] for upgrade in values]
 
     if has_big_batteries:
         return has_tracks
@@ -73,8 +76,8 @@ constraints.append((problem_variables, big_batteries_require_tracks))
 # Restricción: si usa caja de suministros trasera no puede usar el par extra de patas
 
 def aft_supply_box_uncompatible_with_extra_legs(variables, values):
-    has_extra_legs = "patas_extras" in [upgrade[0] for upgrades in values]
-    has_aft_supply_box = "caja_trasera" in [upgrade[0] for upgrades in values]
+    has_extra_legs = "patas_extras" in [upgrade[0] for upgrade in values]
+    has_aft_supply_box = "caja_trasera" in [upgrade[0] for upgrade in values]
 
     if has_extra_legs and has_aft_supply_box:
         return False
@@ -86,8 +89,8 @@ constraints.append((problem_variables, aft_supply_box_uncompatible_with_extra_le
 # Restricción: si usa sistema radios no puede usar la mejora de motores
 
 def radio_uncompatible_with_better_engines(variables, values):
-    has_better_engines = "mejores_motores" in [upgrade[0] for upgrades in values]
-    has_radio = "radios" in [upgrade[0] for upgrades in values]
+    has_better_engines = "mejores_motores" in [upgrade[0] for upgrade in values]
+    has_radio = "radios" in [upgrade[0] for upgrade in values]
 
     if has_better_engines and has_radio:
         return False
@@ -99,8 +102,8 @@ constraints.append((problem_variables, radio_uncompatible_with_better_engines))
 # Restricción: si usa sistema de videollamadas necesita el par extra de patas o las orugas
 
 def videocall_require_tracks_or_legs(variables, values):
-    has_tracks_or_legs = "orugas" or "patas_extras" in [upgrade[0] for upgrades in values]
-    has_videocall = "video_llamadas" in [upgrade[0] for upgrades in values]
+    has_tracks_or_legs = "orugas" or "patas_extras" in [upgrade[0] for upgrade in values]
+    has_videocall = "video_llamadas" in [upgrade[0] for upgrade in values]
 
     if has_videocall:
         return has_tracks_or_legs
@@ -110,4 +113,8 @@ def videocall_require_tracks_or_legs(variables, values):
 constraints.append((problem_variables, videocall_require_tracks_or_legs))
 
 
+problem = CspProblem(problem_variables, domains, constraints)
+solution = backtrack(problem)
 
+print("Solution:")
+print(solution)
