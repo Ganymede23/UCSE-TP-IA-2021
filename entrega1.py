@@ -44,9 +44,7 @@ class robotsminerosproblem(SearchProblem):
         #comienzo recorriendo los robots disponibles
         for robot in robots:
             #me guardo el id, la posicion y la bateria actual del robot
-            datos_robot, posicion, bateria = robot
-            #Del datos robot, puedo obtener tanto el id como el tipo de robot
-            id_robot, tipo_robot = datos_robot
+            id_robot, tipo_robot, posicion, bateria = robot
             #lo que hago es sacar la fila y columna en la que se encuentra el robot
             fila_robot, columna_robot = posicion
             #Si el robot es escaneador
@@ -68,7 +66,7 @@ class robotsminerosproblem(SearchProblem):
                     id_robot_a_abastecer, tipo_robot_a_abastecer = robot_a_abastecer
                     #lo que hago es preguntar si la posicion del robot a abastecer es la misma que el robot de soporte
                     # tambien pregunto si la bateria del robot a abastecer es menor a 1000
-                    if (robot_a_abastecer[1] == posicion) and (robot_a_abastecer [2] < 1000):
+                    if (robot_a_abastecer[2] == posicion) and (robot_a_abastecer [3] < 1000):
                         #si cumple estas caracteristicas debo generar una acción de cargar
                         #en acciones cargo el id del robot de soporte, la accion y el id del robot escaneador que se abasteció
                         acciones.append(id_robot, "cargar", id_robot_a_abastecer)
@@ -87,7 +85,8 @@ def planear_escaneo (tuneles,robots):
 
     for robot in ROBOTS:
         if robot[1] == "escaneador":
-            robot= robot + (1000,) 
+            robot[2] = (5,0)
+            robot [3] = 1000
 
     INITIAL_STATE = (ROBOTS,TUNELES)
 
