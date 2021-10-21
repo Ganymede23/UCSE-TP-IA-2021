@@ -70,7 +70,15 @@ class robotsminerosproblem(SearchProblem):
                         #si cumple estas caracteristicas debo generar una acción de cargar
                         #en acciones cargo el id del robot de soporte, la accion y el id del robot escaneador que se abasteció
                         acciones.append(id_robot, "cargar", id_robot_a_abastecer)
-
+                    else:
+                        #si no se cumple con las condiciones anteriores, el robot se debe mover
+                        for x, (fila, columna) in ACCIONES_MOVER:
+                        nueva_fila = fila_robot + fila
+                        nueva_columna = columna_robot + columna
+                        posicion_destino = (nueva_fila, nueva_columna)
+                        #FALTARIA VERIFICAR SI LA NUEVA POSICIÓN CREADA ES VÁLIDA
+                        if posicion_valida(nueva_fila, nueva_columna) and (posicion_destino in tuneles):
+                            acciones.append(id_robot, "mover", posicion_destino)
         return acciones
     
     def result(self, state, action):
