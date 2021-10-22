@@ -1,11 +1,13 @@
 
 from simpleai.search.models import SearchProblem
 from simpleai.search import astar, breadth_first, depth_first, greedy, uniform_cost, iterative_limited_depth_first
-from simpleai.search.viewers import WebViewer, BaseViewer
+from simpleai.search.viewers import WebViewer, BaseViewer, ConsoleViewer
 
-# TUNELES=[(5,1),(6,1),(6,2)]
+TUNELES=( (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6) )
 
-# ROBOTS = [("s1", "soporte"), ("e1", "escaneador"), ("e2", "escaneador"),("e3", "escaneador")]
+ROBOTS = (("s2", "soporte",(5,1)),("s1", "soporte",(5,1)), ("e1", "escaneador", (5,1), 1000), ("e2", "escaneador", (5,1), 1000),("e3", "escaneador", (5,1), 1000))
+
+INITIAL_STATE = ROBOTS,TUNELES
 
 ACCIONES_MOVER = [((-1, 0)),
                   ((1, 0)),
@@ -142,68 +144,10 @@ class robotsminerosproblem(SearchProblem):
 # TUNELES=[(5,1),(6,1),(6,2)]
 # ROBOTS = [("s1", "soporte"), ("e1", "escaneador"), ("e2", "escaneador"),("e3", "escaneador")]
 
-def planear_escaneo (tuneles,robots):
+my_viewer = ConsoleViewer()
 
-    global ROBOTS 
-    ROBOTS = []
-    global TUNELES
-    TUNELES = tuneles
+problem = robotsminerosproblem(INITIAL_STATE)
+result = astar(problem, graph_search=True, viewer=my_viewer)
 
-
-    for robot in robots:
-        robot = robot + ((5,1),)
-        if robot[1] == "escaneador":
-            robot= robot + (1000,) 
-        ROBOTS.append(robot)
-
-    INITIAL_STATE = (tuple(ROBOTS), tuple(TUNELES))
-
-    ##############################
-
-    problem = robotsminerosproblem(INITIAL_STATE)
-    
-    METODOS = {
-        'breadth_first': breadth_first,
-        'depth_first': depth_first,
-        'iterative_limited_depth_first': iterative_limited_depth_first,
-        'uniform_cost': uniform_cost,
-        'astar': astar,
-    }
-
-    result = METODOS['astar'](problem)
-    plan = []
-
-    for action in result.path():
-        if action is not None:
-            plan.append(action)
-
-            '''
-            camiones_estado, paquetes_estado = state
-            index_camion_action, ciudad_destino, nafta = action
-            
-            lista_paquetes = []
-            c = camiones_estado[index_camion_action][1]
-            ciudad = camiones_estado[index_camion_action][0]
-            camion = camiones[index_camion_action][0]
-            for indep, paq in enumerate(PAQUETES):
-                for paquete in camiones_estado[index_camion_action][2]:
-                    if indep == paquete:
-                        lista_paquetes.append(paq[0])
-            camiones_estado = list(camiones_estado)
-            plan.append((camion, ciudad, round(nafta, 2), list(lista_paquetes)))
-            '''
-    return plan
-
-    #pass
-
-if __name__ == '__main__':
-    #start_time = time.time()
-    
-    TUNELES=[(5,1),(6,1),(6,2)]
-    ROBOTS = [("s1", "soporte"), ("e1", "escaneador"), ("e2", "escaneador"),("e3", "escaneador")]
-
-    plan = planear_escaneo(TUNELES,ROBOTS)
-
-    print(plan)
-
+# print(result)
 
