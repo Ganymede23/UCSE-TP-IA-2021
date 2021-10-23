@@ -12,6 +12,8 @@ ACCIONES_MOVER = [((-1, 0)),
                   ((0, -1)),
                   ((0, 1))]
 
+ESCANEADOS = []
+
 class robotsminerosproblem(SearchProblem):
 
     def is_goal(self, state):
@@ -36,13 +38,14 @@ class robotsminerosproblem(SearchProblem):
         descargados = False
         for robot in robots: 
             if  robot[1] == "escaneador":
-                if robot[3]!=1000:
+                if robot[3]==0:
                     descargados = True
 
         #comienzo recorriendo los robots disponibles
         for robot in robots:
             #Si el robot es escaneador
             if robot[1] == "escaneador":
+
                 #me guardo el id, la posicion y la bateria actual del robot
                 id_robot, tipo_robot, posicion, bateria = robot
 
@@ -75,7 +78,7 @@ class robotsminerosproblem(SearchProblem):
                         #si la bateria del robot a abastecer es menor a 1000 
                         # y si el roboy es tipo escaneador
                         if robot_a_abastecer[1] == "escaneador":                 
-                            if (robot_a_abastecer[2] == posicion and (robot_a_abastecer [3] < 1000)):
+                            if (robot_a_abastecer[2] == posicion and (robot_a_abastecer [3] <= 100)):
                                 #si cumple estas caracteristicas debo generar una acción de cargar
                                 #en acciones cargo el id del robot de soporte, la accion y el id del robot escaneador que se abasteció
                                 acciones.append((id_robot, "cargar", robot_a_abastecer[0]))
@@ -86,8 +89,10 @@ class robotsminerosproblem(SearchProblem):
                                     nueva_columna = columna_robot + columna
                                     posicion_destino = (nueva_fila, nueva_columna)
                                     #si la nueva posicion esta en la lista de tuneles me puedo mover
-                                    if (posicion_destino in TUNELES):
+                                    if (posicion_destino in ESCANEADOS):
                                         acciones.append((id_robot, "mover", posicion_destino))
+                                    elif (posicion_destino in TUNELES):
+                                        acciones.append((id_robot, "mover", posicion_destino))  
         return acciones
     
 # ("s1", "soporte", (5,1), 1000) <--- ESTADO DEL ROBOT
@@ -115,6 +120,8 @@ class robotsminerosproblem(SearchProblem):
             if robotlist[1]=="escaneador":
                 robotlist[3]=robotlist[3]-100
                 if accion in tuneles:
+                    if accion not in ESCANEADOS:
+                        ESCANEADOS.append(accion)
                     tuneles.remove(accion)
             
             #robot = tuple(robotlist)    
@@ -137,31 +144,28 @@ class robotsminerosproblem(SearchProblem):
         return new_state
 
     def heuristic(self, state):
-        return super().heuristic(state)
-
-# TUNELES=[(5,1),(6,1),(6,2)]
-# ROBOTS = [("s1", "soporte"), ("e1", "escaneador"), ("e2", "escaneador"),("e3", "escaneador")]
+        return len(state[1])-1
 
 def planear_escaneo (tuneles,robots):
 
     global ROBOTS 
     ROBOTS = []
     global TUNELES
-    TUNELES = tuneles
+    TUNELES = list((tuneles))
 
-
+    #Agrego datos que necesito para el estado del robot
     for robot in robots:
-        robot = robot + ((5,1),)
+        robot = robot + ((5,0),)
         if robot[1] == "escaneador":
             robot= robot + (1000,) 
         ROBOTS.append(robot)
 
+    # Asi quedan armado el estado:
+    # TUNELES=((5,1),(6,1),(6,2))
+    # ROBOTS = [("s2", "soporte",(5,1)),("s1", "soporte",(5,1)), ("e1", "escaneador", (5,1), 1000), ("e2", "escaneador", (5,1), 1000),("e3", "escaneador", (5,1), 1000)]
+
     INITIAL_STATE = (tuple(ROBOTS), tuple(TUNELES))
 
-    ##############################
-
-    problem = robotsminerosproblem(INITIAL_STATE)
-    
     METODOS = {
         'breadth_first': breadth_first,
         'depth_first': depth_first,
@@ -170,40 +174,31 @@ def planear_escaneo (tuneles,robots):
         'astar': astar,
     }
 
+    problem = robotsminerosproblem(INITIAL_STATE)
     result = METODOS['astar'](problem)
     plan = []
-
+    print(result)
     for action in result.path():
-        if action is not None:
-            plan.append(action)
+        if action[0] is not None:
+            plan.append(action[0])
 
-            '''
-            camiones_estado, paquetes_estado = state
-            index_camion_action, ciudad_destino, nafta = action
-            
-            lista_paquetes = []
-            c = camiones_estado[index_camion_action][1]
-            ciudad = camiones_estado[index_camion_action][0]
-            camion = camiones[index_camion_action][0]
-            for indep, paq in enumerate(PAQUETES):
-                for paquete in camiones_estado[index_camion_action][2]:
-                    if indep == paquete:
-                        lista_paquetes.append(paq[0])
-            camiones_estado = list(camiones_estado)
-            plan.append((camion, ciudad, round(nafta, 2), list(lista_paquetes)))
-            '''
     return plan
-
-    #pass
 
 if __name__ == '__main__':
     #start_time = time.time()
     
-    TUNELES=[(5,1),(6,1),(6,2)]
-    ROBOTS = [("s1", "soporte"), ("e1", "escaneador"), ("e2", "escaneador"),("e3", "escaneador")]
+    tuneles=((
+    (3, 2), (3, 3), (3, 4),
+    (4, 2),
+    (5, 1), (5, 2), (5, 3), (5, 4),
+    (6, 2),
+    (7, 2), (7, 3), (7, 4),
+    ))
+    robots = (("s1", "soporte"), ("e1", "escaneador"),)
 
-    plan = planear_escaneo(TUNELES,ROBOTS)
+    plan = planear_escaneo(tuneles,robots)
 
     print(plan)
+    
 
 
