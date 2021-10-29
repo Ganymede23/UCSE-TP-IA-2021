@@ -45,7 +45,7 @@ def robot_range(variables, values):
     # Hay formas mucho mejores de resolver esto. 
     # Una alternativa es agregar los mAh finales que deja la batería al diccionario y consultar ahí.
     # Esto así es bastante fulero, pero funciona(ría)
-    
+
     if has_small_batteries:
         #print("small:", (5000 / (100+total_cost_per_movement)))
         return 5000 / (100+total_cost_per_movement) >= 50        
@@ -104,8 +104,19 @@ def videocall_requires_tracks_or_legs(variables, values):
 
 constraints.append((('comms','propulsion'), videocall_requires_tracks_or_legs))
 
-problem = CspProblem(problem_variables, domains, constraints)
-solution = backtrack(problem)
+def rediseñar_robot():
+    problem = CspProblem(problem_variables, domains, constraints)
+    solution = backtrack(problem)
 
-print("Solution:")
-print(solution)
+    #print(list((solution['batteries'][0],solution['propulsion'][0],solution['supplies'][0],solution['comms'][0])))
+    return(list((solution['batteries'][0],solution['propulsion'][0],solution['supplies'][0],solution['comms'][0])))
+
+if __name__ == '__main__':
+    problem = CspProblem(problem_variables, domains, constraints)
+    solution = backtrack(problem)
+    print("Solution:")
+    print(solution)
+    print()
+    print("rediseñar_robot function return:")
+    daskyss = rediseñar_robot()
+    print(daskyss)
