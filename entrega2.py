@@ -62,56 +62,47 @@ constraints.append((problem_variables, robot_range))
 
 # Restricción: si usa baterías grandes necesita usar las orugas
 
-def big_batteries_require_tracks(variables, values):
-    has_tracks = "orugas" in [upgrade[0] for upgrade in values]
-    has_big_batteries = "baterias_grandes" in [upgrade[0] for upgrade in values]
-
-    if has_big_batteries:
-        return has_tracks
+def big_batteries_requires_tracks(variables, values):
+    batteries, propulsion = values
+    if batteries == "baterias_grandes":
+        return propulsion == "orugas"
     else:
         return True
 
-constraints.append((problem_variables, big_batteries_require_tracks))
+constraints.append((('batteries','propulsion'), big_batteries_requires_tracks))
 
 # Restricción: si usa caja de suministros trasera no puede usar el par extra de patas
 
 def aft_supply_box_uncompatible_with_extra_legs(variables, values):
-    has_extra_legs = "patas_extras" in [upgrade[0] for upgrade in values]
-    has_aft_supply_box = "caja_trasera" in [upgrade[0] for upgrade in values]
-
-    if has_extra_legs and has_aft_supply_box:
+    supplies, propulsion = values
+    if supplies == "caja_trasera" and propulsion == "patas_extras":
         return False
     else:
         return True
 
-constraints.append((problem_variables, aft_supply_box_uncompatible_with_extra_legs))
+constraints.append((('supplies','propulsion'), aft_supply_box_uncompatible_with_extra_legs))
 
 # Restricción: si usa sistema radios no puede usar la mejora de motores
 
 def radio_uncompatible_with_better_engines(variables, values):
-    has_better_engines = "mejores_motores" in [upgrade[0] for upgrade in values]
-    has_radio = "radios" in [upgrade[0] for upgrade in values]
-
-    if has_better_engines and has_radio:
+    comms, propulsion = values
+    if comms == "radios" and propulsion == "mejores_motores":
         return False
     else:
         return True
 
-constraints.append((problem_variables, radio_uncompatible_with_better_engines))
+constraints.append((('comms','propulsion'), radio_uncompatible_with_better_engines))
 
 # Restricción: si usa sistema de videollamadas necesita el par extra de patas o las orugas
 
-def videocall_require_tracks_or_legs(variables, values):
-    has_tracks_or_legs = "orugas" or "patas_extras" in [upgrade[0] for upgrade in values]
-    has_videocall = "video_llamadas" in [upgrade[0] for upgrade in values]
-
-    if has_videocall:
-        return has_tracks_or_legs
+def videocall_requires_tracks_or_legs(variables, values):
+    comms, propulsion = values
+    if comms == "video_llamadas":
+        return(propulsion == "orugas" or propulsion == "patas_extras")
     else:
         return True
 
-constraints.append((problem_variables, videocall_require_tracks_or_legs))
-
+constraints.append((('comms','propulsion'), videocall_requires_tracks_or_legs))
 
 problem = CspProblem(problem_variables, domains, constraints)
 solution = backtrack(problem)
