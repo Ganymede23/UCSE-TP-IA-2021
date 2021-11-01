@@ -1,7 +1,8 @@
 
 from simpleai.search.models import SearchProblem
 from simpleai.search import astar, breadth_first, depth_first, greedy, uniform_cost, iterative_limited_depth_first
-from simpleai.search.viewers import WebViewer, BaseViewer
+from simpleai.search.viewers import WebViewer, BaseViewer, ConsoleViewer
+from math import ceil
 
 ACCIONES_MOVER = [((-1, 0)),
                   ((1, 0)),
@@ -30,69 +31,62 @@ class robotsminerosproblem(SearchProblem):
         # el destino puede venir definido por una posicion (fila, columna) o por un id de robot escaneador
         #("s1", "mover", (5, 1))
         #("s1", "cargar", "e2")
-
-        # aca me fijo si algun robot tiene menos de 1000 de bateria para poner en marcha a los cargadores
-        descargados = False
+        
+        #comienzo recorriendo los robots disponibles
         for robot in robots:
-            if robot[1] == "escaneador":
-                if robot[3] != 1000:
-                    descargados = True
-
-        # comienzo recorriendo los robots disponibles
-        for robot in robots:
-            # Si el robot es escaneador
+            #Si el robot es escaneador
             if robot[1] == "escaneador":
 
-                # me guardo el id, la posicion y la bateria actual del robot
+                #me guardo el id, la posicion y la bateria actual del robot
                 id_robot, tipo_robot, posicion, bateria = robot
 
-                # lo que hago es sacar la fila y columna en la que se encuentra el robot
+                #lo que hago es sacar la fila y columna en la que se encuentra el robot
                 fila_robot, columna_robot = posicion
 
-                # si la bateria actual es mayor que 100mAh, el robot se puede mover
-                if bateria >= 100:
+                #si la bateria actual es mayor que 100mAh, el robot se puede mover
+                if bateria >= 100:               
                     # recorro las acciones_mover (arriba, abajo, derecha, izquierda), calculo la nueva posición y la agrego en acciones
                     for (fila, columna) in ACCIONES_MOVER:
                         nueva_fila = fila_robot + fila
                         nueva_columna = columna_robot + columna
                         posicion_destino = (nueva_fila, nueva_columna)
-                        # si la nueva posicion esta en la lista de tuneles por escanear le doy prioridad
-                        if (posicion_destino in tuneles) and (posicion_destino in TUNELES):
+                        #si la nueva pos está en los tuneles, muevo el robot
+                        if (posicion_destino in TUNELES):
+                            acciones.append((id_robot, "mover", posicion_destino))                
+            else: #si el robot es de soporte
+                #me guardo el id, la posicion y la bateria actual del robot
+                id_robot, tipo_robot, posicion = robot
+
+                #lo que hago es sacar la fila y columna en la que se encuentra el robot
+                (fila_robot, columna_robot) = posicion
+
+                #recorro la lista de robots
+                for robot_a_abastecer in robots:
+                    #pregunto si la posicion del robot a abastecer es la misma que el robot de soporte
+                    #si la bateria del robot a abastecer es menor a 1000 
+                    # y si el robot es tipo escaneador
+                    cargo = False
+                    if robot_a_abastecer[1] == "escaneador":
+                                         
+                        if (robot_a_abastecer[2] == posicion and (robot_a_abastecer [3] < 1000)):
+                            cargo = True
+                            #si cumple estas caracteristicas debo generar una acción de cargar
+                            #en acciones cargo el id del robot de soporte, la accion y el id del robot escaneador que se abasteció
+                            acciones.append((id_robot, "cargar", robot_a_abastecer[0]))
+                            
+                            
+                #si no se cumple con las condiciones anteriores, el robot se debe mover]
+                if not cargo:
+                    for (fila, columna) in ACCIONES_MOVER:
+
+                        nueva_fila = fila_robot + fila
+                        nueva_columna = columna_robot + columna
+                        posicion_destino = (nueva_fila, nueva_columna)
+                        #si la nueva posicion esta en la lista de tuneles me puedo mover
+                        if (posicion_destino in TUNELES): 
                             acciones.append((id_robot, "mover", posicion_destino))
-                        elif (posicion_destino in TUNELES):
-                            acciones.append((id_robot, "mover", posicion_destino))
-            else:  # si el robot es de soporte
-                # se mueve solo si hay descargados (menos de 1000 de bateria)
-                if descargados:
-                    # me guardo el id, la posicion y la bateria actual del robot
-                    id_robot, tipo_robot, posicion = robot
-
-                    # lo que hago es sacar la fila y columna en la que se encuentra el robot
-                    (fila_robot, columna_robot) = posicion
-
-                    # recorro la lista de robots
-                    for robot_a_abastecer in robots:
-                        # pregunto si la posicion del robot a abastecer es la misma que el robot de soporte
-                        # si la bateria del robot a abastecer es menor a 1000
-                        # y si el robot es tipo escaneador
-                        if robot_a_abastecer[1] == "escaneador":
-                            if (robot_a_abastecer[2] == posicion and (robot_a_abastecer[3] < 1000)):
-                                # si cumple estas caracteristicas debo generar una acción de cargar
-                                # en acciones cargo el id del robot de soporte, la accion y el id del robot escaneador que se abasteció
-                                acciones.append((id_robot, "cargar", robot_a_abastecer[0]))
-                            else:
-                                # si no se cumple con las condiciones anteriores, el robot se debe mover
-                                for (fila, columna) in ACCIONES_MOVER:
-                                    nueva_fila = fila_robot + fila
-                                    nueva_columna = columna_robot + columna
-                                    posicion_destino = (nueva_fila, nueva_columna)
-                                    # si la nueva posicion esta en la lista de tuneles me puedo mover
-                                    # le doy prioridad a las posiciones ya escaneadas para intentar seguir el camino de los escaneadores)
-                                    if (posicion_destino not in tuneles) and (posicion_destino in TUNELES):
-                                        acciones.append((id_robot, "mover", posicion_destino))
-                                    elif (posicion_destino in TUNELES):
-                                        acciones.append((id_robot, "mover", posicion_destino))
-
+        
+        
         return acciones
 
 # ("s1", "soporte", (5,1), 1000) <--- ESTADO DEL ROBOT
@@ -141,24 +135,12 @@ class robotsminerosproblem(SearchProblem):
         return new_state
 
     def heuristic(self, state):
-        # la estimacion se basa en la cantidad de celdas que me faltan por escanear
-        # y si el ultimo robot que realizo una accion es un escaneador:
-        # sumar cantidad de movimientos quel faltan para llegar al casillero sin escanear mas lejanos
-        # no funca bien hay que pensarla mejor
-        # return super().heuristic(state)
-
         estimacion = 0
         robots, tuneles = state
 
-        # '''
-        robot = robots[-1]
-        if robot[1] == "escaneador" and robot[3] != 0:
-            fila, col = robot[2]
-            if len(tuneles) != 0:
-                fila_tunel, col_tunel = tuneles[-1]
-                estimacion = abs(fila-fila_tunel)+abs(col-col_tunel)
-        # '''
         estimacion += len(tuneles)
+        # if len(tuneles) > 10:
+        #     estimacion += 5
 
         return estimacion
 
@@ -198,6 +180,8 @@ def planear_escaneo(tuneles, robots):
 
     print('Camino: ')
     print('|           ACCION           |  				        				ESTADO  					        			|')
+    
+    #'''
     for x in result.path():
         print(' - ', x)
 
@@ -207,6 +191,7 @@ def planear_escaneo(tuneles, robots):
     print(' - Estadisticas:')
     print(' - Cantidad de acciones hasta meta:', len(result.path()))
     print(' - Raw data:', visor.stats)
+    #'''
     # print(' - Raw data:', visor.stats)
     # print('Resultado: ', result)
     for action in result.path():
@@ -220,11 +205,13 @@ if __name__ == '__main__':
     #start_time = time.time()
 
     tuneles = (
-        (5, 1), (5, 2), (5, 3), (5, 4),
-        (6, 1), (6, 2), (6, 3), (6, 4),
+    (3, 3),
+    (4, 3),
+    (5, 1), (5, 2), (5, 3),
+    (6, 3),
     )
 
-    robots = (("s1", "soporte"), ("e1", "escaneador"))
+    robots = (("e1", "escaneador"), ("s1", "soporte"))
 
     '''
     tuneles=(    
