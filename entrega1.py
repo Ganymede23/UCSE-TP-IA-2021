@@ -31,7 +31,6 @@ class robotsminerosproblem(SearchProblem):
         # el destino puede venir definido por una posicion (fila, columna) o por un id de robot escaneador
         #("s1", "mover", (5, 1))
         #("s1", "cargar", "e2")
-        
 
         # aca me fijo si algun robot tiene menos de 1000 de bateria para poner en marcha a los cargadores
         descargados = False
@@ -94,13 +93,13 @@ class robotsminerosproblem(SearchProblem):
                                         acciones.append((id_robot, "mover", posicion_destino))
                                     elif (posicion_destino in TUNELES):
                                         acciones.append((id_robot, "mover", posicion_destino))
-        
         return acciones
 
 # ("s1", "soporte", (5,1), 1000) <--- ESTADO DEL ROBOT
+# (('e1', 'escaneador', (5,0), 1000), ('s1', 'soporte', (5,0)))
 
     def result(self, state, action):
-
+        '''
         id_robot, accion_desc, accion = action
 
         robots, tuneles = state
@@ -139,7 +138,42 @@ class robotsminerosproblem(SearchProblem):
             robots.append(tuple(robotlist))
 
         new_state = tuple(robots), tuple(tuneles)
+        '''
+        id_robot, accion_desc, accion = action
 
+        robots, tuneles = state
+
+        robots = list(robots)
+        tuneles = list(tuneles)
+
+        if accion_desc == "mover":
+            # busco el robot que se debe mover
+            # robot = [x for x in robots if x[0] == id_robot]
+            for robot in robots:
+                if robot[0] == id_robot:
+                    # robot = robot[0] # retira la tupla de la lista que 
+                    robot = list(robot)
+                    robot[2] = accion
+                    if robot[1] == "escaneador":
+                        robot[3] -= 100
+                        if accion in tuneles:
+                            tuneles.remove(accion)
+                    break
+
+            # robots.append(tuple(robotlist))
+        else:
+            # si la accion es cargar busco el robot a cargar y lo saco de la lista
+            # le relleno la bateria y lo vuelvo insertar
+            # robot = [x for x in robots if x[0] == accion]
+            for robot in robots:
+                if robot[0] == id_robot:
+                    robot = list(robot)
+                    robot[3] = 1000
+
+            # robots.append(tuple(robot))
+
+        new_state = tuple(robots), tuple(tuneles)
+        
         return new_state
 
     def heuristic(self, state):
@@ -150,11 +184,8 @@ class robotsminerosproblem(SearchProblem):
         robots, tuneles = state
 
         estimacion += len(tuneles)
-        if len(tuneles) > 10:
-            estimacion += 5
 
         return estimacion
-
 
 def planear_escaneo(tuneles, robots):
 
@@ -184,15 +215,16 @@ def planear_escaneo(tuneles, robots):
         'astar': astar,
     }
 
-    visor = BaseViewer()
     problem = robotsminerosproblem(INITIAL_STATE)
-    result = METODOS['astar'](problem, graph_search=True, viewer=visor)
+    #visor = BaseViewer()
+    #result = METODOS['astar'](problem, graph_search=True, viewer=visor)
+    result = METODOS['astar'](problem, graph_search=True)
     plan = []
-
+    '''
     print('Camino: ')
     print('|           ACCION           |  				        				ESTADO  					        			|')
     
-    #'''
+    
     for x in result.path():
         print(' - ', x)
 
@@ -202,7 +234,7 @@ def planear_escaneo(tuneles, robots):
     print(' - Estadisticas:')
     print(' - Cantidad de acciones hasta meta:', len(result.path()))
     print(' - Raw data:', visor.stats)
-    #'''
+    '''
     # print(' - Raw data:', visor.stats)
     # print('Resultado: ', result)
     for action in result.path():
@@ -224,18 +256,6 @@ if __name__ == '__main__':
 
     robots = (("e1", "escaneador"), ("s1", "soporte"))
 
-    '''
-    tuneles=(    
-    (2, 3),
-    (3, 3),
-    (4, 3),
-    (5, 1), (5, 2), (5, 3),
-    (6, 3),
-    (7, 3),
-    (8, 3),
-    )
-    robots = (("s1", "soporte"), ("e1", "escaneador"),)
-    '''
     plan = planear_escaneo(tuneles, robots)
 
     print('Plan: ', plan)
