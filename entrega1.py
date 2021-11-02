@@ -190,3 +190,5 @@ if __name__ == '__main__':
     plan = planear_escaneo(tuneles, robots)
 
     print('Plan: ', plan)
+
+# By: Los 3 recursantes mineros Busso, Copes, Heit
